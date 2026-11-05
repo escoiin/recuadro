@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Configurar el recuadro en alquiler</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Página de configuración del recuadro: un solo tema oscuro; el naranja del cartel como acento. */
+  :root {
+    color-scheme: dark;
+    --fondo: #0d1016; --panel: #151a24; --linea: rgba(255,255,255,.1); --tinta: #eef1f6; --suave: #9aa5b8;
+    --naranja: #ff7a00; --bien: #35c46d; --mal: #ff5a4a;
+    --display: "Anton", "Impact", "Arial Narrow", sans-serif; --texto: "Rubik", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--tinta); font-family: var(--texto); font-size: 15px; line-height: 1.55;
+    padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+  }
+  .envoltura { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+  header { display: flex; align-items: center; gap: 16px; }
+  .cartelito { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 10px; background: var(--naranja); color: #141414; font-family: var(--display); line-height: .9; box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 5px var(--naranja); }
+  .cartelito small { font-size: 13px; } .cartelito b { font-size: 15px; font-weight: 400; }
+  h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1.05; letter-spacing: .01em; }
+  .intro { margin: 0; color: var(--suave); max-width: 62ch; }
+  section { background: var(--panel); border: 1px solid var(--linea); border-radius: 16px; padding: 20px 22px; display: grid; gap: 12px; min-width: 0; }
+  h2 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; }
+  h2 span { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,.08); font-size: 14px; flex: none; }
+  section.hecho h2 span { background: var(--bien); color: #06210f; }
+  ol { margin: 0; padding-left: 1.3em; color: var(--suave); display: grid; gap: 6px; }
+  ol b, p b { color: var(--tinta); font-weight: 600; }
+  p { margin: 0; }
+  .suave { color: var(--suave); }
+  a { color: #ffb36b; }
+  label { display: grid; gap: 6px; font-weight: 500; }
+  .fila { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  input[type=text], textarea {
+    width: 100%; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--linea);
+    background: #0f131b; color: var(--tinta); font: inherit; font-size: 14px;
+  }
+  input:focus, textarea:focus { outline: 2px solid var(--naranja); outline-offset: 1px; }
+  textarea { resize: vertical; min-height: 92px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+  .copiable { display: flex; gap: 8px; align-items: stretch; min-width: 0; margin-top: 4px; }
+  .copiable code { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px; background: #0f131b; border: 1px solid var(--linea); font-size: 13px; color: var(--tinta); overflow-x: auto; white-space: nowrap; }
+  button {
+    justify-self: start; padding: 10px 18px; border-radius: 999px; border: 0; background: var(--naranja); color: #141414;
+    font: inherit; font-weight: 700; cursor: pointer;
+  }
+  button.secundario { background: rgba(255,255,255,.08); border: 1px solid var(--linea); color: var(--tinta); padding: 8px 14px; font-size: 13px; font-weight: 600; }
+  button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  .estado { padding: 9px 12px; border-radius: 10px; font-size: 14px; }
+  .estado.ok { background: rgba(53,196,109,.12); color: #9ff0bf; }
+  .estado.mal { background: rgba(255,90,74,.12); color: #ffb9b1; }
+  .estado.info { background: rgba(255,255,255,.06); color: var(--suave); }
+  .alerta { padding: 10px 12px; border-radius: 10px; background: rgba(255,178,30,.12); color: #ffdc94; font-size: 14px; }
+  .comandos { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; color: var(--suave); }
+  .comandos dt { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--tinta); }
+  .comandos dd { margin: 0; }
+  #obs-listo:not([hidden]) { display: grid; gap: 12px; }
+  @media (max-width: 560px) { .fila { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <header><span class="cartelito" aria-hidden="true"><small>SE</small><b>ALQUILA</b></span><h1>Configurar el recuadro en alquiler</h1></header>
+  <p class="intro">Se hace una sola vez. Al final tendrás una dirección para pegar en OBS como fuente de navegador. Tu acceso a Twitch no sale de este navegador salvo hacia Twitch.</p>
+
+  <section id="paso-twitch">
+    <h2><span>1</span>Conectar Twitch</h2>
+    <ol>
+      <li>Activa la verificación en dos pasos de tu cuenta de Twitch: <b>Configuración → Seguridad y privacidad</b>. Twitch la exige para el siguiente paso.</li>
+      <li>Abre <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv/console/apps</a>, inicia sesión y pulsa <b>Registrar tu aplicación</b>.</li>
+      <li>Nombre: el que quieras, por ejemplo <b>Recuadro de mi canal</b>.</li>
+      <li>URL de redirección de OAuth: pega esta dirección tal cual.
+        <div class="copiable"><code id="url-redireccion"></code><button type="button" class="secundario" data-copiar="url-redireccion">Copiar</button></div></li>
+      <li>Categoría: <b>Chat Bot</b>. Tipo de cliente: <b>Público</b>. Completa el captcha y pulsa <b>Crear</b>.</li>
+      <li>En la lista, pulsa <b>Administrar</b> en tu aplicación, copia el <b>ID de cliente</b> y pégalo aquí.</li>
+    </ol>
+    <label for="client-id">ID de cliente de Twitch<input type="text" id="client-id" autocomplete="off" spellcheck="false"></label>
+    <button type="button" id="btn-twitch">Conectar con Twitch</button>
+    <p class="estado info" id="estado-twitch">Todavía sin conectar.</p>
+  </section>
+
+  <section id="paso-precio">
+    <h2><span>2</span>Precio</h2>
+    <div class="fila">
+      <label for="alq-bits">Bits<input type="text" id="alq-bits" inputmode="numeric" value="100"></label>
+      <label for="alq-min">Minutos por esos bits<input type="text" id="alq-min" inputmode="numeric" value="30"></label>
+      <label for="alq-max">Máximo por imagen (min)<input type="text" id="alq-max" inputmode="numeric" value="180"></label>
+    </div>
+    <p class="suave">Se cobra en proporción: con 100 bits = 30 min, 300 bits son 90 min. Por debajo del mínimo, el bot da las gracias y explica el precio.</p>
+  </section>
+
+  <section id="paso-obs">
+    <h2><span>3</span>Pegar en OBS</h2>
+    <p class="suave" id="obs-pendiente">Conecta Twitch en el paso 1 para generar la dirección.</p>
+    <div id="obs-listo" hidden>
+      <ol>
+        <li>En OBS, en <b>Fuentes</b>, pulsa <b>+</b> → <b>Navegador</b> y llámala «Recuadro alquiler».</li>
+        <li>Pega la dirección de abajo en <b>URL</b>. Ancho <b>400</b>, alto <b>400</b>.</li>
+        <li>Deja sin marcar «Apagar la fuente cuando no sea visible», para no perder bits al cambiar de escena.</li>
+        <li>Pulsa Aceptar y arrastra el recuadro encima del minimapa. Ajusta el tamaño desde las esquinas.</li>
+        <li>Añádela <b>una sola vez</b>. Si la quieres en otras escenas, usa <b>Añadir existente</b>.</li>
+      </ol>
+      <p class="alerta">Esta dirección lleva tu acceso a Twitch. No la enseñes en directo ni la compartas.</p>
+      <label for="url-obs">Dirección para OBS<textarea id="url-obs" readonly></textarea></label>
+      <button type="button" class="secundario" data-copiar="url-obs">Copiar dirección</button>
+    </div>
+  </section>
+
+  <section id="paso-uso">
+    <h2><span>4</span>Comandos del chat</h2>
+    <dl class="comandos">
+      <dt>!alquiler</dt><dd>Cualquiera: el bot explica cómo alquilar el recuadro.</dd>
+      <dt>!si abc</dt><dd>Tú o un mod: aprueba la imagen con ese código. Si el enlace no era directo, añade el bueno: <code>!si abc https://i.imgur.com/….png</code></dd>
+      <dt>!no abc</dt><dd>Tú o un mod: rechaza la imagen.</dd>
+      <dt>!quitar</dt><dd>Tú o un mod: retira al momento la imagen que esté en pantalla.</dd>
+    </dl>
+  </section>
+</div>
+
+<script src="js/nucleo.js"></script>
+<script src="js/twitch.js"></script>
+<script>
+(function () {
+  var C = window.Cartas;
+  var $ = function (id) { return document.getElementById(id); };
+  var base = location.origin + location.pathname.replace(/index\.html$/, '');
+  var redireccion = base;
+  $('url-redireccion').textContent = redireccion;
+
+  function guardar(clave, valor, sesion) { try { (sesion ? sessionStorage : localStorage).setItem('recuadro-' + clave, valor); } catch (e) {} }
+  function leer(clave, sesion) { try { return (sesion ? sessionStorage : localStorage).getItem('recuadro-' + clave); } catch (e) { return null; } }
+  function estado(tipo, texto) { var e = $('estado-twitch'); e.className = 'estado ' + tipo; e.textContent = texto; }
+
+  $('client-id').value = leer('client-id') || '';
+  ['alq-bits', 'alq-min', 'alq-max'].forEach(function (id) {
+    var v = leer(id); if (v) $(id).value = v;
+    $(id).addEventListener('change', function () { guardar(id, $(id).value.trim()); generar(); });
+  });
+
+  var token = leer('twitch-token', true), conectado = false;
+  var h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (h.get('access_token')) {
+    if (h.get('state') && h.get('state') === leer('twitch-state', true)) { token = h.get('access_token'); guardar('twitch-token', token, true); }
+    else estado('mal', 'La respuesta de Twitch no coincide con esta sesión. Vuelve a pulsar «Conectar con Twitch».');
+    history.replaceState(null, '', location.pathname + location.search);
+  } else if (h.get('error')) {
+    estado('mal', 'Twitch no dio acceso: ' + (h.get('error_description') || h.get('error')));
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  $('btn-twitch').addEventListener('click', function () {
+    var id = $('client-id').value.trim();
+    if (!/^[a-z0-9]{20,40}$/i.test(id)) { estado('mal', 'Pega el ID de cliente de tu aplicación de Twitch (letras y números, sin espacios).'); return; }
+    guardar('client-id', id);
+    var st = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    guardar('twitch-state', st, true);
+    location.href = 'https://id.twitch.tv/oauth2/authorize?' + new URLSearchParams({
+      client_id: id, redirect_uri: redireccion, response_type: 'token',
+      scope: C.ESCOPOS_ALQUILER.join(' '), state: st, force_verify: 'true'
+    }).toString();
+  });
+
+  function generar() {
+    $('obs-pendiente').hidden = conectado;
+    $('obs-listo').hidden = !conectado;
+    $('paso-obs').classList.toggle('hecho', conectado);
+    if (!conectado) return;
+    var num = function (id, def) { var v = parseInt($(id).value, 10); return v > 0 ? v : def; };
+    var cfg = { clientId: $('client-id').value.trim(), token: token,
+      alquiler: { bits: num('alq-bits', 100), minutos: num('alq-min', 30), maxMinutos: num('alq-max', 180) } };
+    $('url-obs').value = base + 'alquiler.html#c=' + C.codificarConfig(cfg);
+  }
+
+  if (token) {
+    estado('info', 'Comprobando el acceso a Twitch…');
+    C.validarToken(token).then(function (u) {
+      if (u.client_id !== $('client-id').value.trim()) throw new Error('El acceso no corresponde a este ID de cliente. Pulsa «Conectar con Twitch» otra vez.');
+      var faltan = C.ESCOPOS_ALQUILER.filter(function (s) { return (u.scopes || []).indexOf(s) < 0; });
+      if (faltan.length) throw new Error('Faltan permisos: ' + faltan.join(', ') + '. Pulsa «Conectar con Twitch» otra vez.');
+      conectado = true;
+      estado('ok', 'Conectado como ' + u.login + '. Ya tienes la dirección para OBS en el paso 3.');
+      $('paso-twitch').classList.add('hecho');
+      generar();
+    }).catch(function (e) { token = null; estado('mal', e.message); generar(); });
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-copiar]');
+    if (!b) return;
+    var el = $(b.getAttribute('data-copiar'));
+    var texto = el.tagName === 'TEXTAREA' ? el.value : el.textContent;
+    var hecho = function () { var t = b.textContent; b.textContent = 'Copiado'; setTimeout(function () { b.textContent = t; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(hecho, function () { if (el.select) el.select(); });
+    else if (el.select) el.select();
+  });
+  generar();
+})();
+</script>
+</body>
+</html>

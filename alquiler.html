@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Recuadro en alquiler · fuente para OBS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/alquiler.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  #recuadro { position: absolute; inset: 0; }
+  #estado { position: absolute; left: 4px; right: 4px; bottom: 4px; z-index: 5; padding: 6px 8px; border-radius: 8px;
+    background: rgba(0,0,0,.85); color: #fff; font: 12px/1.3 "Rubik", system-ui, sans-serif; }
+  #estado.error { border: 2px solid #ff5a4a; }
+</style>
+</head>
+<body>
+<div id="recuadro"></div>
+<div id="estado" hidden></div>
+<script src="js/nucleo.js"></script>
+<script src="js/twitch.js"></script>
+<script src="js/alquiler.js"></script>
+<script>
+(function () {
+  var C = window.Cartas;
+  var cfg = C.leerConfigHash(location.hash), estadoEl = document.getElementById('estado'), t = null;
+  function estado(tipo, texto) {
+    clearTimeout(t);
+    estadoEl.className = tipo === 'error' ? 'error' : '';
+    estadoEl.textContent = texto; estadoEl.hidden = false;
+    if (tipo !== 'error') t = setTimeout(function () { estadoEl.hidden = true; }, 5000);
+  }
+  var a = cfg.alquiler || {};
+  if (!cfg.clientId || !cfg.token) {
+    C.crearAlquiler(document.getElementById('recuadro'), { bits: a.bits, minutos: a.minutos });
+    estado('error', 'Falta la configuración: abre la página de configuración y copia en OBS la dirección que te da.');
+    return;
+  }
+  var twitch;
+  var alquiler = C.crearAlquiler(document.getElementById('recuadro'), {
+    bits: a.bits, minutos: a.minutos, maxMinutos: a.maxMinutos,
+    enviarChat: function (texto) { return twitch.enviarChat(texto); },
+    onError: function (m) { estado('error', m); }
+  });
+  twitch = C.conectarTwitch({
+    clientId: cfg.clientId, token: cfg.token, eventos: ['bits', 'chat'], escopos: C.ESCOPOS_ALQUILER,
+    onBits: function (ev) { alquiler.bits(ev); },
+    onMensaje: function (ev) { alquiler.comando(ev); },
+    onEstado: estado
+  });
+  twitch.iniciar().catch(function (e) { estado('error', e.message); });
+})();
+</script>
+</body>
+</html>
