@@ -39,14 +39,21 @@
     return;
   }
   var twitch;
+  var tituloPowerUp = a.powerUp == null ? 'Alquilar el recuadro' : a.powerUp;
+  var normal = function (x) { return String(x || '').trim().toLowerCase(); };
   var alquiler = C.crearAlquiler(document.getElementById('recuadro'), {
-    bits: a.bits, minutos: a.minutos, maxMinutos: a.maxMinutos,
+    bits: a.bits, minutos: a.minutos, maxMinutos: a.maxMinutos, powerUp: tituloPowerUp,
     enviarChat: function (texto) { return twitch.enviarChat(texto); },
     onError: function (m) { estado('error', m); }
   });
   twitch = C.conectarTwitch({
-    clientId: cfg.clientId, token: cfg.token, eventos: ['bits', 'chat'], escopos: C.ESCOPOS_ALQUILER,
+    clientId: cfg.clientId, token: cfg.token, escopos: C.ESCOPOS_ALQUILER,
+    eventos: tituloPowerUp ? ['bits', 'chat', 'powerups'] : ['bits', 'chat'],
     onBits: function (ev) { alquiler.bits(ev); },
+    onPowerUp: function (ev) {
+      // Solo los Power-ups del recuadro (título que contenga el configurado, por si tienes varios precios).
+      if (tituloPowerUp && normal(ev.titulo).indexOf(normal(tituloPowerUp)) >= 0) { ev.esPowerUp = true; alquiler.bits(ev); }
+    },
     onMensaje: function (ev) { alquiler.comando(ev); },
     onEstado: estado
   });

@@ -3,7 +3,8 @@
    - API Helix para escribir en el chat (como la cuenta del canal).
    - Bits (cheers) para el recuadro de alquiler.
    Permisos del token: channel:read:redemptions, user:read:chat, user:write:chat, bits:read.
-   Cada fuente de OBS elige a qué se suscribe (op.eventos: 'canjes', 'chat', 'bits'). */
+   - Power-ups personalizados (se pagan con bits y pueden pedir texto al espectador).
+   Cada fuente de OBS elige a qué se suscribe (op.eventos: 'canjes', 'chat', 'bits', 'powerups'). */
 (function () {
   var C = window.Cartas;
   var EVENTSUB = 'wss://eventsub.wss.twitch.tv/ws';
@@ -22,6 +23,7 @@
     var clientId = op.clientId, token = op.token;
     var alCanjear = op.onCanje || function () {}, alMensaje = op.onMensaje || function () {}, alEstado = op.onEstado || function () {};
     var alBits = op.onBits || function () {};
+    var alPowerUp = op.onPowerUp || function () {};
     var eventos = op.eventos || ['canjes', 'chat'];
     var usuario = null, ws = null, cerrado = false, reconectando = false, vigilante = null, esperaMs = 20000;
     var vistos = {}, ordenVistos = [];
@@ -34,19 +36,26 @@
       });
     }
 
+    var avisosSub = [];
     function suscribir(sesion) {
+      avisosSub = [];
       var todas = {
         canjes: { type: 'channel.channel_points_custom_reward_redemption.add', version: '1', condition: { broadcaster_user_id: usuario.user_id } },
         chat: { type: 'channel.chat.message', version: '1', condition: { broadcaster_user_id: usuario.user_id, user_id: usuario.user_id } },
-        bits: { type: 'channel.cheer', version: '1', condition: { broadcaster_user_id: usuario.user_id } }
+        bits: { type: 'channel.cheer', version: '1', condition: { broadcaster_user_id: usuario.user_id } },
+        powerups: { type: 'channel.custom_power_up_redemption.add', version: '1', condition: { broadcaster_user_id: usuario.user_id }, opcional: true }
       };
       var subs = eventos.map(function (k) { return todas[k]; }).filter(Boolean);
       return subs.reduce(function (p, s) {
         return p.then(function () {
-          s.transport = { method: 'websocket', session_id: sesion };
-          return helix('eventsub/subscriptions', { method: 'POST', body: JSON.stringify(s) }).then(function (r) {
+          var cuerpo = { type: s.type, version: s.version, condition: s.condition, transport: { method: 'websocket', session_id: sesion } };
+          return helix('eventsub/subscriptions', { method: 'POST', body: JSON.stringify(cuerpo) }).then(function (r) {
             if (r.ok || r.status === 409) return;
-            return r.text().then(function (t) { throw new Error('Twitch rechazó ' + s.type + ' (' + r.status + '): ' + t); });
+            return r.text().then(function (t) {
+              // Los Power-ups personalizados aún no están en todos los canales: si fallan, el resto sigue funcionando.
+              if (s.opcional) { avisosSub.push('Twitch no deja escuchar los Power-ups personalizados (' + r.status + '); los bits con enlace siguen funcionando.'); return; }
+              throw new Error('Twitch rechazó ' + s.type + ' (' + r.status + '): ' + t);
+            });
           });
         });
       }, Promise.resolve());
@@ -90,7 +99,8 @@
             return;
           }
           suscribir(m.payload.session.id).then(function () {
-            alEstado('ok', 'Cartas conectadas a Twitch (' + usuario.login + ')');
+            if (avisosSub.length) alEstado('aviso', 'Conectado a Twitch (' + usuario.login + '). ' + avisosSub.join(' '));
+            else alEstado('ok', 'Conectado a Twitch (' + usuario.login + ')');
           }, function (e) { alEstado('error', e.message); });
         } else if (tipo === 'session_reconnect') {
           reconectando = true;
@@ -105,6 +115,10 @@
             var esMod = e.chatter_user_id === usuario.user_id || insignias.indexOf('broadcaster') >= 0 ||
               insignias.indexOf('moderator') >= 0 || insignias.indexOf('lead_moderator') >= 0;
             alMensaje({ login: e.chatter_user_login, nombre: e.chatter_user_name, texto: (e.message && e.message.text) || '', id: e.message_id, esMod: esMod });
+          } else if (t === 'channel.custom_power_up_redemption.add') {
+            var pu = e.custom_power_up || {};
+            alPowerUp({ login: e.user_login || '', nombre: e.user_name || e.user_login || 'Alguien', texto: e.user_input || '',
+              bits: pu.bits || 0, titulo: pu.title || '', id: e.id || m.metadata.message_id });
           } else if (t === 'channel.cheer') {
             alBits({ login: e.user_login || '', nombre: e.is_anonymous ? 'Anónimo' : (e.user_name || e.user_login), anonimo: !!e.is_anonymous,
               bits: e.bits || 0, texto: e.message || '', id: m.metadata.message_id });

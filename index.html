@@ -85,18 +85,31 @@
     <p class="estado info" id="estado-twitch">Todavía sin conectar.</p>
   </section>
 
+  <section id="paso-powerup">
+    <h2><span>2</span>Power-up en Twitch</h2>
+    <ol>
+      <li>En tu panel de creador de Twitch, entra en <b>Puntos y recompensas del canal</b> y crea un <b>Power-up personalizado</b>.</li>
+      <li>Título: <b>Alquilar el recuadro</b>. Precio: <b>100 bits</b>.</li>
+      <li>Activa que el espectador tenga que escribir un texto, y en la indicación pega esto:
+        <div class="copiable"><code id="texto-indicacion">Pega el enlace directo de tu imagen de Imgur (i.imgur.com/…). Los mods la revisan antes de que salga. Si no cumple las normas, no se muestra y los bits no se devuelven.</code><button type="button" class="secundario" data-copiar="texto-indicacion">Copiar</button></div></li>
+      <li>¿Quieres más duraciones? Crea otros con el mismo comienzo de título, por ejemplo <b>Alquilar el recuadro 60 min</b> a 200 bits. El tiempo sale del precio.</li>
+    </ol>
+    <label for="alq-powerup">El recuadro acepta los Power-ups cuyo título contenga:<input type="text" id="alq-powerup" value="Alquilar el recuadro"></label>
+    <p class="suave">Los bits con el enlace en un mensaje siguen funcionando igual. Déjalo vacío si no quieres usar Power-ups.</p>
+  </section>
+
   <section id="paso-precio">
-    <h2><span>2</span>Precio</h2>
+    <h2><span>3</span>Precio</h2>
     <div class="fila">
       <label for="alq-bits">Bits<input type="text" id="alq-bits" inputmode="numeric" value="100"></label>
       <label for="alq-min">Minutos por esos bits<input type="text" id="alq-min" inputmode="numeric" value="30"></label>
       <label for="alq-max">Máximo por imagen (min)<input type="text" id="alq-max" inputmode="numeric" value="180"></label>
     </div>
-    <p class="suave">Se cobra en proporción: con 100 bits = 30 min, 300 bits son 90 min. Por debajo del mínimo, el bot da las gracias y explica el precio.</p>
+    <p class="suave">Se cobra en proporción: con 100 bits = 30 min, un Power-up de 200 bits da 60 min y 300 bits con enlace son 90 min. Con bits por debajo del mínimo, el bot da las gracias y explica el precio.</p>
   </section>
 
   <section id="paso-obs">
-    <h2><span>3</span>Pegar en OBS</h2>
+    <h2><span>4</span>Pegar en OBS</h2>
     <p class="suave" id="obs-pendiente">Conecta Twitch en el paso 1 para generar la dirección.</p>
     <div id="obs-listo" hidden>
       <ol>
@@ -113,9 +126,9 @@
   </section>
 
   <section id="paso-uso">
-    <h2><span>4</span>Comandos del chat</h2>
+    <h2><span>5</span>Comandos del chat</h2>
     <dl class="comandos">
-      <dt>!alquiler</dt><dd>Cualquiera: el bot explica cómo alquilar el recuadro.</dd>
+      <dt>!alquiler</dt><dd>Cualquiera: el bot explica cómo alquilar el recuadro con el Power-up o con bits.</dd>
       <dt>!si abc</dt><dd>Tú o un mod: aprueba la imagen con ese código. Si el enlace no era directo, añade el bueno: <code>!si abc https://i.imgur.com/….png</code></dd>
       <dt>!no abc</dt><dd>Tú o un mod: rechaza la imagen.</dd>
       <dt>!quitar</dt><dd>Tú o un mod: retira al momento la imagen que esté en pantalla.</dd>
@@ -138,8 +151,8 @@
   function estado(tipo, texto) { var e = $('estado-twitch'); e.className = 'estado ' + tipo; e.textContent = texto; }
 
   $('client-id').value = leer('client-id') || '';
-  ['alq-bits', 'alq-min', 'alq-max'].forEach(function (id) {
-    var v = leer(id); if (v) $(id).value = v;
+  ['alq-bits', 'alq-min', 'alq-max', 'alq-powerup'].forEach(function (id) {
+    var v = leer(id); if (v !== null) $(id).value = v;
     $(id).addEventListener('change', function () { guardar(id, $(id).value.trim()); generar(); });
   });
 
@@ -173,7 +186,7 @@
     if (!conectado) return;
     var num = function (id, def) { var v = parseInt($(id).value, 10); return v > 0 ? v : def; };
     var cfg = { clientId: $('client-id').value.trim(), token: token,
-      alquiler: { bits: num('alq-bits', 100), minutos: num('alq-min', 30), maxMinutos: num('alq-max', 180) } };
+      alquiler: { bits: num('alq-bits', 100), minutos: num('alq-min', 30), maxMinutos: num('alq-max', 180), powerUp: $('alq-powerup').value.trim() } };
     $('url-obs').value = base + 'alquiler.html#c=' + C.codificarConfig(cfg);
   }
 
@@ -184,7 +197,7 @@
       var faltan = C.ESCOPOS_ALQUILER.filter(function (s) { return (u.scopes || []).indexOf(s) < 0; });
       if (faltan.length) throw new Error('Faltan permisos: ' + faltan.join(', ') + '. Pulsa «Conectar con Twitch» otra vez.');
       conectado = true;
-      estado('ok', 'Conectado como ' + u.login + '. Ya tienes la dirección para OBS en el paso 3.');
+      estado('ok', 'Conectado como ' + u.login + '. Ya tienes la dirección para OBS en el paso 4.');
       $('paso-twitch').classList.add('hecho');
       generar();
     }).catch(function (e) { token = null; estado('mal', e.message); generar(); });

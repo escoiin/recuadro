@@ -47,7 +47,7 @@
         '<div class="cartel">' +
           '<div class="cartel-placa"><span class="cartel-se">SE</span><span class="cartel-alquila">ALQUILA</span></div>' +
           '<div class="cartel-precio"><b>' + precio + ' bits</b> · ' + minutosBloque + ' min</div>' +
-          '<div class="cartel-como">Manda bits con el enlace directo de tu imagen<br><span>i.imgur.com/…</span></div>' +
+          '<div class="cartel-como">' + (op.powerUp ? 'Canjéalo en los Power-ups' : 'Manda bits con el enlace directo de tu imagen') + '<br><span>i.imgur.com/…</span></div>' +
           '<div class="cartel-cola" hidden></div>' +
         '</div>' +
         '<div class="anuncio" hidden>' +
@@ -118,15 +118,15 @@
     function bits(ev) {
       var url = C.imgurDirecto(ev.texto);
       var otroImgur = !url && IMGUR_CUALQUIERA.test(ev.texto);
-      if (!url && !otroImgur) return null; // bits normales, sin imagen
-      if (ev.bits < precio) {
+      if (!url && !otroImgur && !ev.esPowerUp) return null; // bits normales, sin imagen
+      if (ev.bits < precio && !ev.esPowerUp) {
         chat('@' + ev.nombre + ' ¡gracias por los bits! El recuadro se alquila a partir de ' + precio + ' bits.');
         return null;
       }
       var item = {
         id: codigoDe(String(ev.id || Math.random()), usado), nombre: ev.nombre, login: ev.login, bits: ev.bits,
-        minutos: Math.min(maxMin, Math.round((ev.bits / precio) * minutosBloque)),
-        url: url, enlace: url || (ev.texto.match(IMGUR_CUALQUIERA) || [''])[0]
+        minutos: Math.max(1, Math.min(maxMin, Math.round((ev.bits / precio) * minutosBloque))),
+        url: url, enlace: url || (ev.texto.match(IMGUR_CUALQUIERA) || [''])[0] || String(ev.texto || '').trim().slice(0, 120)
       };
       est.pendientes.push(item);
       guardar(); pintar();
@@ -134,8 +134,8 @@
         chat('Imagen pendiente ' + item.id + ' de ' + item.nombre + ' (' + item.bits + ' bits, ' + item.minutos + ' min): ' + item.url +
           ' · Mods: !si ' + item.id + ' o !no ' + item.id);
       } else {
-        chat('Imagen pendiente ' + item.id + ' de ' + item.nombre + ' (' + item.bits + ' bits, ' + item.minutos + ' min): ' + item.enlace +
-          ' · No es un enlace directo. Mods: !si ' + item.id + ' seguido del enlace i.imgur.com/… de la imagen, o !no ' + item.id);
+        chat('Imagen pendiente ' + item.id + ' de ' + item.nombre + ' (' + item.bits + ' bits, ' + item.minutos + ' min): ' + (item.enlace || 'sin enlace') +
+          ' · No es un enlace directo de Imgur. Mods: !si ' + item.id + ' seguido del enlace i.imgur.com/… de la imagen, o !no ' + item.id);
       }
       return item;
     }
@@ -145,7 +145,10 @@
       if (/^!alquiler\b/i.test(texto)) {
         if (ahora() - ultimoInfo < 30000) return false;
         ultimoInfo = ahora();
-        chat('El recuadro se alquila: ' + precio + ' bits = ' + minutosBloque + ' minutos. Manda bits con el enlace directo de tu imagen de Imgur (i.imgur.com/…). Los mods la revisan antes de que salga.');
+        chat('El recuadro se alquila: ' + precio + ' bits = ' + minutosBloque + ' minutos. ' +
+          (op.powerUp ? 'Canjea el Power-up «' + op.powerUp + '» en el menú de Power-ups del chat y pega el enlace directo de tu imagen de Imgur (i.imgur.com/…). También vale mandar bits con el enlace en el mensaje. '
+                      : 'Manda bits con el enlace directo de tu imagen de Imgur (i.imgur.com/…). ') +
+          'Los mods la revisan antes de que salga; si no cumple las normas, no se muestra.');
         return true;
       }
       if (!ev.esMod) return false;
