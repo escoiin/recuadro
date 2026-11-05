@@ -54,6 +54,13 @@
     try { var guardado = JSON.parse(localStorage.getItem(clave) || 'null'); if (guardado) est = guardado; } catch (e) {}
     function guardar() { try { localStorage.setItem(clave, JSON.stringify(est)); } catch (e) {} }
     function chat(t) { return enviarChat(t).catch(function (e) { if (op.onError) op.onError(e.message); }); }
+    // Números cortos y fáciles de teclear (1, 2, 3…). Vuelven a empezar cuando no queda nada pendiente ni en cola.
+    function nuevoNumero() {
+      if (!est.pendientes.length && !est.cola.length && !est.actual) est.contador = 0;
+      est.contador = (est.contador || 0) + 1;
+      while (usado(String(est.contador))) est.contador++;
+      return String(est.contador);
+    }
     function usado(c) {
       return est.pendientes.concat(est.cola).some(function (x) { return x.id === c; }) || (est.actual && est.actual.id === c);
     }
@@ -149,7 +156,7 @@
       }
       var esPuntos = tipo === 'puntos';
       var item = {
-        id: codigoDe(String(ev.id || Math.random()), usado), nombre: ev.nombre, login: String(ev.login || '').toLowerCase(), tipo: tipo,
+        id: nuevoNumero(), nombre: ev.nombre, login: String(ev.login || '').toLowerCase(), tipo: tipo,
         bits: esPuntos ? 0 : (ev.bits || 0),
         pago: esPuntos ? miles(ev.coste || (puntos && puntos.coste)) + ' puntos' : (ev.bits || 0) + ' bits',
         minutos: esPuntos ? ((puntos && puntos.minutos) || 10) : Math.max(1, Math.min(maxMin, Math.round(((ev.bits || 0) / precio) * minutosBloque))),
@@ -199,9 +206,9 @@
         return true;
       }
       if (!ev.esMod) return false;
-      if ((m = texto.match(/^!s[ií]\s+([a-z0-9]{3})\b(.*)$/i))) {
+      if ((m = texto.match(/^!s[ií]\s+#?([a-z0-9]{1,6})\b(.*)$/i))) {
         var id = m[1].toLowerCase(), i = indice(est.pendientes, id);
-        if (i < 0) { chat('No hay ninguna imagen pendiente con el código ' + id + '.'); return true; }
+        if (i < 0) { chat('No hay ninguna imagen pendiente con el número ' + id + '.'); return true; }
         var item = est.pendientes[i], nueva = C.imgurDirecto(m[2]);
         if (nueva) item.url = nueva;
         if (!item.url) { chat('Falta el enlace directo: !si ' + id + ' https://i.imgur.com/….png'); return true; }
@@ -216,11 +223,11 @@
         tic();
         return true;
       }
-      if ((m = texto.match(/^!no\s+([a-z0-9]{3})\b/i))) {
+      if ((m = texto.match(/^!no\s+#?([a-z0-9]{1,6})\b/i))) {
         var cod = m[1].toLowerCase(), ip = indice(est.pendientes, cod), ic = indice(est.cola, cod), quitado;
         if (ip >= 0) quitado = est.pendientes.splice(ip, 1)[0];
         else if (ic >= 0) quitado = est.cola.splice(ic, 1)[0];
-        else { chat('No hay ninguna imagen pendiente con el código ' + cod + '.'); return true; }
+        else { chat('No hay ninguna imagen pendiente con el número ' + cod + '.'); return true; }
         guardar(); pintar();
         // Si ya se marcó como completado al aprobarla, Twitch no deja devolver los puntos: solo se devuelven si estaba pendiente.
         if (quitado.canjeId && ip >= 0) {
