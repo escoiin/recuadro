@@ -34,25 +34,31 @@
   }
   var a = cfg.alquiler || {};
   if (!cfg.clientId || !cfg.token) {
-    C.crearAlquiler(document.getElementById('recuadro'), { bits: a.bits, minutos: a.minutos });
+    C.crearAlquiler(document.getElementById('recuadro'), { bits: a.bits, minutos: a.minutos, puntos: a.puntos });
     estado('error', 'Falta la configuración: abre la página de configuración y copia en OBS la dirección que te da.');
     return;
   }
   var twitch;
-  var tituloPowerUp = a.powerUp == null ? 'Alquilar el recuadro' : a.powerUp;
+  var tituloPowerUp = a.powerUp || '';
+  var puntos = a.puntos && a.puntos.recompensaId ? a.puntos : null;
   var normal = function (x) { return String(x || '').trim().toLowerCase(); };
   var alquiler = C.crearAlquiler(document.getElementById('recuadro'), {
-    bits: a.bits, minutos: a.minutos, maxMinutos: a.maxMinutos, powerUp: tituloPowerUp,
+    bits: a.bits, minutos: a.minutos, maxMinutos: a.maxMinutos, powerUp: tituloPowerUp, puntos: puntos,
+    alAprobar: function (item) { return twitch.actualizarCanje(item.recompensaId, item.canjeId, 'FULFILLED'); },
+    alRechazar: function (item) { return twitch.actualizarCanje(item.recompensaId, item.canjeId, 'CANCELED'); },
     enviarChat: function (texto) { return twitch.enviarChat(texto); },
     onError: function (m) { estado('error', m); }
   });
   twitch = C.conectarTwitch({
     clientId: cfg.clientId, token: cfg.token, escopos: C.ESCOPOS_ALQUILER,
-    eventos: tituloPowerUp ? ['bits', 'chat', 'powerups'] : ['bits', 'chat'],
-    onBits: function (ev) { alquiler.bits(ev); },
+    eventos: ['chat', 'bits'].concat(puntos ? ['canjes'] : [], tituloPowerUp ? ['powerups'] : []),
+    onCanje: function (ev) {
+      if (puntos && ev.recompensaId === puntos.recompensaId) { ev.tipo = 'puntos'; alquiler.peticion(ev); }
+    },
+    onBits: function (ev) { ev.tipo = 'bits'; alquiler.peticion(ev); },
     onPowerUp: function (ev) {
       // Solo los Power-ups del recuadro (título que contenga el configurado, por si tienes varios precios).
-      if (tituloPowerUp && normal(ev.titulo).indexOf(normal(tituloPowerUp)) >= 0) { ev.esPowerUp = true; alquiler.bits(ev); }
+      if (tituloPowerUp && normal(ev.titulo).indexOf(normal(tituloPowerUp)) >= 0) { ev.tipo = 'powerup'; alquiler.peticion(ev); }
     },
     onMensaje: function (ev) { alquiler.comando(ev); },
     onEstado: estado

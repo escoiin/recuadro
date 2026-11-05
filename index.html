@@ -57,6 +57,7 @@
   .estado.mal { background: rgba(255,90,74,.12); color: #ffb9b1; }
   .estado.info { background: rgba(255,255,255,.06); color: var(--suave); }
   .alerta { padding: 10px 12px; border-radius: 10px; background: rgba(255,178,30,.12); color: #ffdc94; font-size: 14px; }
+  .casilla { display: flex; align-items: center; gap: 10px; font-weight: 400; }
   .comandos { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; color: var(--suave); }
   .comandos dt { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--tinta); }
   .comandos dd { margin: 0; }
@@ -85,27 +86,29 @@
     <p class="estado info" id="estado-twitch">Todavía sin conectar.</p>
   </section>
 
-  <section id="paso-powerup">
-    <h2><span>2</span>Power-up en Twitch</h2>
-    <ol>
-      <li>En tu panel de creador de Twitch, entra en <b>Puntos y recompensas del canal</b> y crea un <b>Power-up personalizado</b>.</li>
-      <li>Título: <b>Alquilar el recuadro</b>. Precio: <b>100 bits</b>.</li>
-      <li>Activa que el espectador tenga que escribir un texto, y en la indicación pega esto:
-        <div class="copiable"><code id="texto-indicacion">Pega el enlace directo de tu imagen de Imgur (i.imgur.com/…). Los mods la revisan antes de que salga. Si no cumple las normas, no se muestra y los bits no se devuelven.</code><button type="button" class="secundario" data-copiar="texto-indicacion">Copiar</button></div></li>
-      <li>¿Quieres más duraciones? Crea otros con el mismo comienzo de título, por ejemplo <b>Alquilar el recuadro 60 min</b> a 200 bits. El tiempo sale del precio.</li>
-    </ol>
-    <label for="alq-powerup">El recuadro acepta los Power-ups cuyo título contenga:<input type="text" id="alq-powerup" value="Alquilar el recuadro"></label>
-    <p class="suave">Los bits con el enlace en un mensaje siguen funcionando igual. Déjalo vacío si no quieres usar Power-ups.</p>
+  <section id="paso-puntos">
+    <h2><span>2</span>Recompensa de puntos del canal</h2>
+    <p class="suave">La recompensa la crea esta página en tu canal. Así, cuando un mod escriba <b>!no</b>, Twitch le devuelve los puntos al espectador; con una recompensa creada a mano en Twitch eso no se puede.</p>
+    <div class="fila">
+      <label for="pts-titulo">Título<input type="text" id="pts-titulo" maxlength="45" value="Alquilar el recuadro"></label>
+      <label for="pts-coste">Puntos<input type="text" id="pts-coste" inputmode="numeric" value="3000"></label>
+      <label for="pts-min">Minutos en pantalla<input type="text" id="pts-min" inputmode="numeric" value="10"></label>
+    </div>
+    <label class="casilla"><input type="checkbox" id="pts-una" checked> Una vez por persona en cada directo</label>
+    <button type="button" id="btn-recompensa">Crear la recompensa en Twitch</button>
+    <p class="estado info" id="estado-recompensa">Conecta Twitch en el paso 1 primero.</p>
+    <p class="suave">Después puedes cambiarle el icono o el color desde Twitch. No la borres allí: si lo haces, vuelve aquí y créala de nuevo. Para cambiar título, puntos o minutos, hazlo aquí y pulsa el botón.</p>
   </section>
 
-  <section id="paso-precio">
-    <h2><span>3</span>Precio</h2>
+  <section id="paso-bits">
+    <h2><span>3</span>Bits (opcional)</h2>
+    <p class="suave">Además de los puntos, también se puede alquilar mandando bits con el enlace en el mensaje. Las imágenes pagadas con bits pasan delante en la cola.</p>
     <div class="fila">
       <label for="alq-bits">Bits<input type="text" id="alq-bits" inputmode="numeric" value="100"></label>
       <label for="alq-min">Minutos por esos bits<input type="text" id="alq-min" inputmode="numeric" value="30"></label>
       <label for="alq-max">Máximo por imagen (min)<input type="text" id="alq-max" inputmode="numeric" value="180"></label>
     </div>
-    <p class="suave">Se cobra en proporción: con 100 bits = 30 min, un Power-up de 200 bits da 60 min y 300 bits con enlace son 90 min. Con bits por debajo del mínimo, el bot da las gracias y explica el precio.</p>
+    <label for="alq-powerup">Si creaste un Power-up de bits para esto, escribe su título (si no, déjalo vacío)<input type="text" id="alq-powerup" value=""></label>
   </section>
 
   <section id="paso-obs">
@@ -115,7 +118,7 @@
       <ol>
         <li>En OBS, en <b>Fuentes</b>, pulsa <b>+</b> → <b>Navegador</b> y llámala «Recuadro alquiler».</li>
         <li>Pega la dirección de abajo en <b>URL</b>. Ancho <b>400</b>, alto <b>400</b>.</li>
-        <li>Deja sin marcar «Apagar la fuente cuando no sea visible», para no perder bits al cambiar de escena.</li>
+        <li>Deja sin marcar «Apagar la fuente cuando no sea visible», para no perder canjes al cambiar de escena.</li>
         <li>Pulsa Aceptar y arrastra el recuadro encima del minimapa. Ajusta el tamaño desde las esquinas.</li>
         <li>Añádela <b>una sola vez</b>. Si la quieres en otras escenas, usa <b>Añadir existente</b>.</li>
       </ol>
@@ -128,9 +131,10 @@
   <section id="paso-uso">
     <h2><span>5</span>Comandos del chat</h2>
     <dl class="comandos">
-      <dt>!alquiler</dt><dd>Cualquiera: el bot explica cómo alquilar el recuadro con el Power-up o con bits.</dd>
+      <dt>!alquiler</dt><dd>Cualquiera: el bot explica cómo alquilar el recuadro.</dd>
       <dt>!si abc</dt><dd>Tú o un mod: aprueba la imagen con ese código. Si el enlace no era directo, añade el bueno: <code>!si abc https://i.imgur.com/….png</code></dd>
-      <dt>!no abc</dt><dd>Tú o un mod: rechaza la imagen.</dd>
+      <dt>!imagen AbCd123.png</dt><dd>El espectador: completa su petición con el código de su imagen si el enlace no le sirvió (no es un enlace, así que no lo bloquea el filtro del chat).</dd>
+      <dt>!no abc</dt><dd>Tú o un mod: rechaza la imagen. Si era con puntos, Twitch se los devuelve al espectador.</dd>
       <dt>!quitar</dt><dd>Tú o un mod: retira al momento la imagen que esté en pantalla.</dd>
     </dl>
   </section>
@@ -151,12 +155,18 @@
   function estado(tipo, texto) { var e = $('estado-twitch'); e.className = 'estado ' + tipo; e.textContent = texto; }
 
   $('client-id').value = leer('client-id') || '';
-  ['alq-bits', 'alq-min', 'alq-max', 'alq-powerup'].forEach(function (id) {
+  ['alq-bits', 'alq-min', 'alq-max', 'alq-powerup', 'pts-titulo', 'pts-coste', 'pts-min'].forEach(function (id) {
     var v = leer(id); if (v !== null) $(id).value = v;
     $(id).addEventListener('change', function () { guardar(id, $(id).value.trim()); generar(); });
   });
+  if (leer('pts-una') === 'no') $('pts-una').checked = false;
+  $('pts-una').addEventListener('change', function () { guardar('pts-una', $('pts-una').checked ? 'si' : 'no'); });
 
-  var token = leer('twitch-token', true), conectado = false;
+  var token = leer('twitch-token', true), conectado = false, usuario = null;
+  var recompensa = null;   // { id, titulo, coste, minutos }
+  try { recompensa = JSON.parse(leer('recompensa') || 'null'); } catch (e) {}
+  var INDICACION = 'Pega el enlace directo de tu imagen de Imgur (i.imgur.com/…) o solo su código (por ejemplo AbCd123.png). Los mods la revisan antes de que salga. Si la rechazan, te devolvemos los puntos.';
+
   var h = new URLSearchParams(location.hash.replace(/^#/, ''));
   if (h.get('access_token')) {
     if (h.get('state') && h.get('state') === leer('twitch-state', true)) { token = h.get('access_token'); guardar('twitch-token', token, true); }
@@ -179,14 +189,81 @@
     }).toString();
   });
 
+  function helix(ruta, init) {
+    init = init || {};
+    return fetch('https://api.twitch.tv/helix/' + ruta, {
+      method: init.method || 'GET', body: init.body,
+      headers: { 'Client-Id': $('client-id').value.trim(), Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+    });
+  }
+  function num(id, def) { var v = parseInt(String($(id).value).replace(/\./g, ''), 10); return v > 0 ? v : def; }
+  function estadoRec(tipo, texto) { var e = $('estado-recompensa'); e.className = 'estado ' + tipo; e.textContent = texto; }
+  function pintarRecompensa() {
+    $('btn-recompensa').textContent = recompensa ? 'Guardar cambios en la recompensa' : 'Crear la recompensa en Twitch';
+    $('paso-puntos').classList.toggle('hecho', !!recompensa);
+  }
+
+  // Busca la recompensa que ya creó esta aplicación (si existe) al conectar.
+  function cargarRecompensa() {
+    return helix('channel_points/custom_rewards?broadcaster_id=' + usuario.user_id + '&only_manageable_rewards=true').then(function (r) {
+      if (!r.ok) throw new Error('No se pudieron leer tus recompensas (' + r.status + ').');
+      return r.json();
+    }).then(function (j) {
+      var lista = j.data || [], encontrada = null;
+      lista.forEach(function (x) { if (recompensa && x.id === recompensa.id) encontrada = x; });
+      if (!encontrada && lista.length) encontrada = lista[0];
+      if (encontrada) {
+        recompensa = { id: encontrada.id, titulo: encontrada.title, coste: encontrada.cost, minutos: num('pts-min', 10) };
+        $('pts-titulo').value = encontrada.title; $('pts-coste').value = encontrada.cost;
+        guardar('recompensa', JSON.stringify(recompensa));
+        estadoRec('ok', 'Recompensa lista en tu canal: «' + encontrada.title + '» por ' + encontrada.cost + ' puntos.');
+      } else {
+        recompensa = null; guardar('recompensa', 'null');
+        estadoRec('info', 'Todavía no has creado la recompensa. Revisa los datos y pulsa el botón.');
+      }
+      pintarRecompensa(); generar();
+    }).catch(function (e) { estadoRec('mal', e.message); });
+  }
+
+  $('btn-recompensa').addEventListener('click', function () {
+    if (!conectado) { estadoRec('mal', 'Conecta Twitch en el paso 1 primero.'); return; }
+    var titulo = $('pts-titulo').value.trim() || 'Alquilar el recuadro', coste = num('pts-coste', 3000), una = $('pts-una').checked;
+    var cuerpo = {
+      title: titulo, cost: coste, prompt: INDICACION, is_enabled: true, background_color: '#FF7A00',
+      is_user_input_required: true, should_redemptions_skip_request_queue: false,
+      is_max_per_user_per_stream_enabled: una
+    };
+    if (una) cuerpo.max_per_user_per_stream = 1;
+    var boton = $('btn-recompensa'); boton.disabled = true;
+    estadoRec('info', recompensa ? 'Guardando cambios…' : 'Creando la recompensa…');
+    var q = 'channel_points/custom_rewards?broadcaster_id=' + usuario.user_id + (recompensa ? '&id=' + recompensa.id : '');
+    helix(q, { method: recompensa ? 'PATCH' : 'POST', body: JSON.stringify(cuerpo) }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (r.ok) return j;
+        var msg = (j && j.message) || '';
+        if (/DUPLICATE/i.test(msg)) throw new Error('Ya tienes otra recompensa con ese título, creada a mano en Twitch. Bórrala allí o elige otro título aquí.');
+        if (r.status === 403) throw new Error('Twitch no deja crear la recompensa (403). Comprueba que tu canal tiene los puntos del canal activados.');
+        if (r.status === 404 && recompensa) { recompensa = null; guardar('recompensa', 'null'); pintarRecompensa(); throw new Error('La recompensa ya no existe en Twitch (¿la borraste?). Pulsa otra vez el botón para crearla de nuevo.'); }
+        throw new Error('Twitch respondió ' + r.status + (msg ? ': ' + msg : '') + '.');
+      });
+    }).then(function (j) {
+      var d = j.data[0];
+      recompensa = { id: d.id, titulo: d.title, coste: d.cost, minutos: num('pts-min', 10) };
+      guardar('recompensa', JSON.stringify(recompensa));
+      estadoRec('ok', 'Hecho: «' + d.title + '» por ' + d.cost + ' puntos y ' + recompensa.minutos + ' min. Copia la dirección nueva del paso 4 en OBS.');
+      pintarRecompensa(); generar();
+    }).catch(function (e) { estadoRec('mal', e.message); }).then(function () { boton.disabled = false; });
+  });
+
   function generar() {
     $('obs-pendiente').hidden = conectado;
     $('obs-listo').hidden = !conectado;
     $('paso-obs').classList.toggle('hecho', conectado);
     if (!conectado) return;
-    var num = function (id, def) { var v = parseInt($(id).value, 10); return v > 0 ? v : def; };
+    if (recompensa) recompensa.minutos = num('pts-min', 10);
     var cfg = { clientId: $('client-id').value.trim(), token: token,
-      alquiler: { bits: num('alq-bits', 100), minutos: num('alq-min', 30), maxMinutos: num('alq-max', 180), powerUp: $('alq-powerup').value.trim() } };
+      alquiler: { bits: num('alq-bits', 100), minutos: num('alq-min', 30), maxMinutos: num('alq-max', 180), powerUp: $('alq-powerup').value.trim(),
+        puntos: recompensa ? { recompensaId: recompensa.id, titulo: recompensa.titulo, coste: recompensa.coste, minutos: recompensa.minutos } : null } };
     $('url-obs').value = base + 'alquiler.html#c=' + C.codificarConfig(cfg);
   }
 
@@ -195,13 +272,15 @@
     C.validarToken(token).then(function (u) {
       if (u.client_id !== $('client-id').value.trim()) throw new Error('El acceso no corresponde a este ID de cliente. Pulsa «Conectar con Twitch» otra vez.');
       var faltan = C.ESCOPOS_ALQUILER.filter(function (s) { return (u.scopes || []).indexOf(s) < 0; });
-      if (faltan.length) throw new Error('Faltan permisos: ' + faltan.join(', ') + '. Pulsa «Conectar con Twitch» otra vez.');
-      conectado = true;
-      estado('ok', 'Conectado como ' + u.login + '. Ya tienes la dirección para OBS en el paso 4.');
+      if (faltan.length) throw new Error('Faltan permisos nuevos (' + faltan.join(', ') + '). Pulsa «Conectar con Twitch» otra vez.');
+      conectado = true; usuario = u;
+      estado('ok', 'Conectado como ' + u.login + '.');
       $('paso-twitch').classList.add('hecho');
       generar();
+      return cargarRecompensa();
     }).catch(function (e) { token = null; estado('mal', e.message); generar(); });
   }
+  pintarRecompensa();
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-copiar]');

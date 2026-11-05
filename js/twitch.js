@@ -9,7 +9,7 @@
   var C = window.Cartas;
   var EVENTSUB = 'wss://eventsub.wss.twitch.tv/ws';
   C.ESCOPOS_TWITCH = ['channel:read:redemptions', 'user:read:chat', 'user:write:chat', 'bits:read'];
-  C.ESCOPOS_ALQUILER = ['user:read:chat', 'user:write:chat', 'bits:read'];
+  C.ESCOPOS_ALQUILER = ['user:read:chat', 'user:write:chat', 'bits:read', 'channel:read:redemptions', 'channel:manage:redemptions'];
 
   C.validarToken = function (token) {
     return fetch('https://id.twitch.tv/oauth2/validate', { headers: { Authorization: 'OAuth ' + token } })
@@ -109,7 +109,8 @@
           if (yaVisto(m.metadata.message_id)) return;
           var t = m.payload.subscription.type, e = m.payload.event;
           if (t === 'channel.channel_points_custom_reward_redemption.add') {
-            alCanjear({ login: e.user_login, nombre: e.user_name, recompensa: e.reward && e.reward.title, texto: e.user_input || '', id: e.id });
+            alCanjear({ login: e.user_login, nombre: e.user_name, recompensa: e.reward && e.reward.title, recompensaId: e.reward && e.reward.id,
+              coste: e.reward && e.reward.cost, texto: e.user_input || '', id: e.id, canjeId: e.id });
           } else if (t === 'channel.chat.message') {
             var insignias = (e.badges || []).map(function (b) { return b.set_id; });
             var esMod = e.chatter_user_id === usuario.user_id || insignias.indexOf('broadcaster') >= 0 ||
@@ -158,6 +159,17 @@
       });
     }
 
+    /* Marca un canje de puntos como completado (FULFILLED) o lo cancela devolviendo los puntos (CANCELED).
+       Solo funciona con recompensas creadas por esta misma aplicación. */
+    function actualizarCanje(recompensaId, canjeId, estado) {
+      if (!usuario) return Promise.reject(new Error('Aún no hay conexión con Twitch'));
+      var q = 'broadcaster_id=' + usuario.user_id + '&reward_id=' + encodeURIComponent(recompensaId) + '&id=' + encodeURIComponent(canjeId);
+      return helix('channel_points/custom_rewards/redemptions?' + q, { method: 'PATCH', body: JSON.stringify({ status: estado }) })
+        .then(function (r) {
+          if (!r.ok) return r.text().then(function (t) { throw new Error('Twitch no dejó ' + (estado === 'CANCELED' ? 'devolver los puntos' : 'completar el canje') + ' (' + r.status + ')'); });
+        });
+    }
+
     function iniciar() {
       return C.validarToken(token).then(function (u) {
         if (u.client_id !== clientId) throw new Error('El acceso a Twitch no corresponde a este ID de cliente. Vuelve a conectar desde la configuración.');
@@ -176,6 +188,7 @@
     return {
       iniciar: iniciar,
       enviarChat: enviarChat,
+      actualizarCanje: actualizarCanje,
       usuario: function () { return usuario; },
       cerrar: function () { cerrado = true; clearTimeout(vigilante); if (ws) ws.close(); }
     };
