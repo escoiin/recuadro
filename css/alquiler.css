@@ -20,8 +20,8 @@
   content: ""; position: absolute; inset: calc(var(--u, 1vmin) * 3); border: calc(var(--u, 1vmin) * 1.2) solid #fff; border-radius: calc(var(--u, 1vmin) * 2); pointer-events: none;
 }
 .cartel-placa { display: flex; flex-direction: column; align-items: center; line-height: .86; }
-.cartel-se { font-family: "Anton", "Impact", "Arial Narrow", sans-serif; font-size: calc(var(--u, 1vmin) * 13); letter-spacing: .04em; }
-.cartel-alquila { font-family: "Anton", "Impact", "Arial Narrow", sans-serif; font-size: calc(var(--u, 1vmin) * 21); letter-spacing: .01em; }
+.cartel-se { font-family: "Anton", "Impact", "Arial Narrow", sans-serif; font-size: calc(var(--u, 1vmin) * 17); letter-spacing: .04em; }
+.cartel-alquila { font-family: "Anton", "Impact", "Arial Narrow", sans-serif; font-size: calc(var(--u, 1vmin) * 26); letter-spacing: .01em; }
 .cartel-precio {
   padding: calc(var(--u, 1vmin) * 1.6) calc(var(--u, 1vmin) * 4); border-radius: calc(var(--u, 1vmin) * 99); background: #141414; color: #fff;
   font-size: calc(var(--u, 1vmin) * 7); font-weight: 500; white-space: nowrap;

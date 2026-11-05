@@ -69,12 +69,6 @@
       '<div class="caja">' +
         '<div class="cartel">' +
           '<div class="cartel-placa"><span class="cartel-se">SE</span><span class="cartel-alquila">ALQUILA</span></div>' +
-          (puntos
-            ? '<div class="cartel-precio"><b>' + miles(puntos.coste) + ' puntos</b> · ' + puntos.minutos + ' min</div>' +
-              '<div class="cartel-como">Canjéalo con tus puntos del canal<br><span>i.imgur.com/…</span></div>'
-            : '<div class="cartel-precio"><b>' + precio + ' bits</b> · ' + minutosBloque + ' min</div>' +
-              '<div class="cartel-como">' + (op.powerUp ? 'Canjéalo en los Power-ups' : 'Manda bits con el enlace directo de tu imagen') + '<br><span>i.imgur.com/…</span></div>') +
-          '<div class="cartel-cola" hidden></div>' +
         '</div>' +
         '<div class="anuncio" hidden>' +
           '<div class="anuncio-fondo"></div>' +
@@ -89,7 +83,6 @@
     var cartel = raiz.querySelector('.cartel'), anuncio = raiz.querySelector('.anuncio');
     var img = raiz.querySelector('.anuncio-img'), fondo = raiz.querySelector('.anuncio-fondo');
     var quien = raiz.querySelector('.anuncio-quien'), tiempo = raiz.querySelector('.anuncio-tiempo');
-    var colaTxt = raiz.querySelector('.cartel-cola');
 
     function pintar() {
       var a = est.actual;
@@ -107,9 +100,6 @@
         anuncio.hidden = true; cartel.hidden = false;
         img.removeAttribute('src'); img.removeAttribute('data-url');
       }
-      var esperando = est.pendientes.length + est.cola.length;
-      colaTxt.hidden = !esperando;
-      colaTxt.textContent = est.cola.length ? 'Siguiente imagen ya aprobada' : 'Imagen en revisión';
       if (op.onCambio) op.onCambio(est);
     }
 
